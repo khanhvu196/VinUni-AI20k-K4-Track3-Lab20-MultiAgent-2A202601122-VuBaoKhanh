@@ -73,6 +73,10 @@ GEMINI_MODEL=gemini-3.6-flash
 # optional
 LANGSMITH_API_KEY=...
 TAVILY_API_KEY=...
+# Langfuse tracing used by this implementation
+LANGFUSE_PUBLIC_KEY=...
+LANGFUSE_SECRET_KEY=...
+LANGFUSE_HOST=https://cloud.langfuse.com
 ```
 
 ### 3. Chạy smoke test
@@ -99,7 +103,17 @@ python -m multi_agent_research_lab.cli multi-agent \
   --query "Research GraphRAG state-of-the-art and write a 500-word summary"
 ```
 
-Mặc định lệnh sẽ báo các `TODO` cần làm. Đây là chủ đích của starter repo.
+Lệnh chạy Supervisor → Researcher → Analyst → Writer trên shared state, dùng corpus offline
+để truy xuất evidence và Gemini để xử lý từng vai trò.
+
+### 6. Chạy benchmark và gửi trace lên Langfuse
+
+```bash
+python -m multi_agent_research_lab.cli benchmark
+```
+
+Lệnh chạy cùng một query qua single-agent và multi-agent, ghi trace lên Langfuse và tạo
+`reports/benchmark_report.md`. Chụp màn hình trace multi-agent trên Langfuse để nộp kèm repo.
 
 ## Milestones trong 2 giờ lab
 

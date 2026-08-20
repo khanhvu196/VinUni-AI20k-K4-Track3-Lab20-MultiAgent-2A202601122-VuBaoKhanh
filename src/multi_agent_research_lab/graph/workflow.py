@@ -14,6 +14,7 @@ from multi_agent_research_lab.agents import (
 from multi_agent_research_lab.agents.base import BaseAgent
 from multi_agent_research_lab.core.config import Settings, get_settings
 from multi_agent_research_lab.core.state import ResearchState
+from multi_agent_research_lab.observability.tracing import trace_span
 
 
 class MultiAgentWorkflow:
@@ -33,7 +34,15 @@ class MultiAgentWorkflow:
     def _run_agent(agent: BaseAgent, state: ResearchState) -> dict[str, Any]:
         """Run an agent and convert its Pydantic state to a LangGraph update."""
 
-        return agent.run(state).model_dump()
+        with trace_span(
+            agent.name,
+            {"iteration": state.iteration, "query": state.request.query},
+        ) as span:
+            result = agent.run(state)
+            if result.agent_results:
+                span["attributes"].update(result.agent_results[-1].metadata)
+        result.add_trace_event("agent_span", span)
+        return result.model_dump()
 
     def _run_supervisor(self, state: ResearchState) -> dict[str, Any]:
         return self._run_agent(self.supervisor, state)

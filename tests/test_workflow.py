@@ -16,4 +16,4 @@ def test_workflow_stops_when_state_is_complete() -> None:
 
     assert result.final_answer == "Final answer"
     assert result.route_history == ["done"]
-    assert result.trace[-1]["name"] == "supervisor_route"
+    assert [event["name"] for event in result.trace] == ["supervisor_route", "agent_span"]
