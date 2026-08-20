@@ -10,6 +10,6 @@ giá trị cao, nơi khả năng audit quan trọng hơn tốc độ.
 ## Khi nào không nên dùng multi-agent?
 
 Không nên dùng cho câu hỏi hẹp mà một model có thể trả lời trực tiếp và không cần evidence
-audit. Benchmark cho thấy hai cách cùng đạt quality proxy 10.0, nhưng multi-agent mất 86.26
-giây và 6,146 tokens so với 26.73 giây và 1,159 tokens của single-agent. Trong trường hợp này,
+audit. Benchmark cho thấy hai cách cùng đạt quality proxy 10.0, nhưng multi-agent mất 110.51
+giây và 9,060 tokens so với 22.70 giây và 1,198 tokens của single-agent. Trong trường hợp này,
 single-agent đơn giản, nhanh và tiết kiệm quota hơn.

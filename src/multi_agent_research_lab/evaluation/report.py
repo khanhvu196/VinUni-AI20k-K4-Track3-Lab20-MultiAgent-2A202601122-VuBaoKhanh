@@ -43,12 +43,13 @@ def render_markdown_report(metrics: list[BenchmarkMetrics]) -> str:
             "The system mitigates this by preserving source IDs and synthetic labels in shared "
             "state, requiring "
             "citations at every handoff, bounding iterations, validating routes, applying provider "
-            "timeouts/retries, and exposing each agent span in Langfuse for audit.",
+            "timeouts/retries, running a final Critic audit, and exposing each agent span in "
+            "Langfuse for audit.",
             "",
             "## Trace evidence",
             "",
             "Open the configured Langfuse project and capture the multi-agent trace showing "
-            "Supervisor, Researcher, Analyst, and Writer spans.",
+            "Supervisor, Researcher, Analyst, Writer, and Critic spans.",
         ]
     )
     return "\n".join(lines) + "\n"

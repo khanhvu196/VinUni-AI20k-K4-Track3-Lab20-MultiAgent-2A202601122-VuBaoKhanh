@@ -21,6 +21,7 @@ có xứng đáng với latency/token overhead hay không, thay vì mặc địn
 | Researcher | Truy xuất và trích notes có citation | Query, max_sources | Sources, research_notes | Retrieval kém hoặc LLM lỗi |
 | Analyst | So sánh claims, source quality và uncertainty | Sources, research_notes | analysis_notes | Khuếch đại evidence yếu |
 | Writer | Viết câu trả lời có citation và limitations | Sources, analysis_notes | final_answer | Bịa nguồn hoặc bỏ uncertainty |
+| Critic | Audit citation, evidence và hallucination risk | Sources, final_answer | critic_notes | Bỏ sót unsupported claim |
 
 ## Shared state
 
@@ -28,6 +29,7 @@ có xứng đáng với latency/token overhead hay không, thay vì mặc địn
 - `iteration`, `route_history`: giải thích routing và chặn loop.
 - `sources`: evidence cùng source ID, provenance và synthetic flag.
 - `research_notes`, `analysis_notes`, `final_answer`: artifact riêng của từng handoff.
+- `critic_notes`: verdict và đề xuất sửa từ bước audit độc lập.
 - `agent_results`: structured result cùng token/cost metadata.
 - `trace`, `errors`: local audit trail, latency spans và fallback diagnostics.
 
@@ -38,6 +40,7 @@ START → Supervisor
           ├─ thiếu sources/research_notes → Researcher ─┐
           ├─ thiếu analysis_notes         → Analyst ────┤
           ├─ thiếu final_answer           → Writer ─────┤
+          ├─ thiếu critic_notes           → Critic ─────┤
           └─ đủ output/đạt iteration limit → END        │
                     Supervisor ←─────────────────────────┘
 ```
@@ -47,7 +50,8 @@ START → Supervisor
 - Max iterations: mặc định 6, cấu hình bằng `MAX_ITERATIONS`.
 - Timeout: Gemini request mặc định 60 giây qua `TIMEOUT_SECONDS`.
 - Retry: tối đa 3 provider attempts với exponential backoff 1–4 giây.
-- Fallback: Researcher dùng cited snippets; Analyst dùng research notes; Writer dùng analysis.
+- Fallback: Researcher dùng cited snippets; Analyst dùng research notes; Writer dùng analysis;
+  Critic yêu cầu manual citation review.
 - Validation: Pydantic input/state, allowlist route và LangGraph recursion limit.
 
 ## Benchmark plan
@@ -60,8 +64,9 @@ Kết quả thực tế:
 
 | Run | Latency | Tokens | Quality proxy | Citation coverage | Failure rate |
 |---|---:|---:|---:|---:|---:|
-| Single-agent | 26.73s | 1,159 | 10.0 | N/A | 0% |
-| Multi-agent | 86.26s | 6,146 | 10.0 | 100% | 0% |
+| Single-agent | 22.70s | 1,198 | 10.0 | N/A | 0% |
+| Multi-agent + Critic | 110.51s | 9,060 | 10.0 | 100% | 0% |
 
 Multi-agent không tăng quality proxy trong lần chạy này nhưng cung cấp evidence grounding,
-100% citation coverage và trace theo vai trò; đổi lại chậm hơn 3.2× và dùng token nhiều hơn 5.3×.
+100% citation coverage, Critic audit và trace theo vai trò; đổi lại chậm hơn 4.9× và dùng
+token nhiều hơn 7.6×.

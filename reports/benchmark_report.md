@@ -2,8 +2,8 @@
 
 | Run | Latency (s) | Cost (USD) | Quality | Citation cov. | Failure rate | Notes |
 |---|---:|---:|---:|---:|---:|---|
-| single-agent | 26.73 | 0.0000 | 10.0 |  | 0% | tokens=1159; routes=0 |
-| multi-agent | 86.26 | 0.0000 | 10.0 | 100% | 0% | tokens=6146; routes=4 |
+| single-agent | 22.70 | 0.0000 | 10.0 |  | 0% | tokens=1198; routes=0 |
+| multi-agent | 110.51 | 0.0000 | 10.0 | 100% | 0% | tokens=9060; routes=5 |
 
 ## Methodology
 
@@ -13,13 +13,17 @@ Quality is a reproducible 0–10 proxy: non-empty answer, at least 100 words, an
 
 ## Failure mode and mitigation
 
-A weak or unsupported Researcher note can cascade through Analyst and Writer. The system mitigates this by preserving source IDs and synthetic labels in shared state, requiring citations at every handoff, bounding iterations, validating routes, applying provider timeouts/retries, and exposing each agent span in Langfuse for audit.
+A weak or unsupported Researcher note can cascade through Analyst and Writer. The system
+mitigates this by preserving source IDs and synthetic labels in shared state, requiring
+citations at every handoff, bounding iterations, validating routes, applying provider
+timeouts/retries, running a final Critic audit, and exposing each agent span in Langfuse.
 
 ## Trace evidence
 
-The Langfuse trace captured on 2026-08-20 shows the single-agent baseline and the complete
-multi-agent route: Supervisor → Researcher → Supervisor → Analyst → Supervisor → Writer →
-Supervisor. Inputs and outputs remain inspectable for each role.
+The screenshot below captures the core Supervisor → Researcher → Analyst → Writer workflow.
+The subsequent bonus benchmark recorded `researcher → analyst → writer → critic → done` in
+`route_history`, produced non-empty `critic_notes`, and exported the additional Critic span to
+the same Langfuse project.
 
 ![Langfuse multi-agent trace](langfuse_multi_agent_trace.png)
 
@@ -32,7 +36,7 @@ Supervisor. Inputs and outputs remain inspectable for each role.
 **Risk / failure mode:** Nếu Researcher lấy evidence chưa phù hợp thì lỗi có thể truyền sang
 Analyst và Writer.
 
-**One concrete improvement:** Thêm Critic để kiểm tra citation và chất lượng evidence trước
-khi trả final answer.
+**One concrete improvement:** Critic đã được thêm để kiểm tra citation và chất lượng evidence
+trước khi trả final answer.
 
 **Score:** 9/10

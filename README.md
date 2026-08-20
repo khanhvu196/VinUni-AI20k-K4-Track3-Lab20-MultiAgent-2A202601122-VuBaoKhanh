@@ -103,8 +103,8 @@ python -m multi_agent_research_lab.cli multi-agent \
   --query "Research GraphRAG state-of-the-art and write a 500-word summary"
 ```
 
-Lệnh chạy Supervisor → Researcher → Analyst → Writer trên shared state, dùng corpus offline
-để truy xuất evidence và Gemini để xử lý từng vai trò.
+Lệnh chạy Supervisor → Researcher → Analyst → Writer → Critic trên shared state, dùng corpus
+offline để truy xuất evidence và Gemini để xử lý, tổng hợp, rồi audit câu trả lời.
 
 ### 6. Chạy benchmark và gửi trace lên Langfuse
 

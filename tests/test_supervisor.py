@@ -25,6 +25,10 @@ def test_supervisor_routes_through_missing_artifacts() -> None:
 
     state.final_answer = "Final answer"
     supervisor.run(state)
+    assert state.route_history[-1] == "critic"
+
+    state.critic_notes = "Critic audit"
+    supervisor.run(state)
     assert state.route_history[-1] == "done"
     assert state.trace[-1]["name"] == "supervisor_route"
 

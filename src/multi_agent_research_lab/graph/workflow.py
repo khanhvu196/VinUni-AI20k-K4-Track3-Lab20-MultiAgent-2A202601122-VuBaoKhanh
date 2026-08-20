@@ -7,6 +7,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 from multi_agent_research_lab.agents import (
     AnalystAgent,
+    CriticAgent,
     ResearcherAgent,
     SupervisorAgent,
     WriterAgent,
@@ -29,6 +30,7 @@ class MultiAgentWorkflow:
         self.researcher = ResearcherAgent()
         self.analyst = AnalystAgent()
         self.writer = WriterAgent()
+        self.critic = CriticAgent()
 
     @staticmethod
     def _run_agent(agent: BaseAgent, state: ResearchState) -> dict[str, Any]:
@@ -53,6 +55,8 @@ class MultiAgentWorkflow:
                     state.analysis_notes = "Provisional analysis fallback:\n" + state.research_notes
                 elif agent.name == "writer" and (state.analysis_notes or state.research_notes):
                     state.final_answer = state.analysis_notes or state.research_notes
+                elif agent.name == "critic" and state.final_answer:
+                    state.critic_notes = "Critic unavailable; manual citation review required."
                 else:
                     raise
                 result = state
@@ -73,18 +77,21 @@ class MultiAgentWorkflow:
     def _run_writer(self, state: ResearchState) -> dict[str, Any]:
         return self._run_agent(self.writer, state)
 
+    def _run_critic(self, state: ResearchState) -> dict[str, Any]:
+        return self._run_agent(self.critic, state)
+
     @staticmethod
     def _next_route(
         state: ResearchState,
-    ) -> Literal["researcher", "analyst", "writer", "done"]:
+    ) -> Literal["researcher", "analyst", "writer", "critic", "done"]:
         """Read the route just recorded by Supervisor."""
 
         if not state.route_history:
             raise ValueError("Supervisor did not record a route")
         route = state.route_history[-1]
-        if route not in {"researcher", "analyst", "writer", "done"}:
+        if route not in {"researcher", "analyst", "writer", "critic", "done"}:
             raise ValueError(f"Supervisor returned invalid route: {route}")
-        return cast(Literal["researcher", "analyst", "writer", "done"], route)
+        return cast(Literal["researcher", "analyst", "writer", "critic", "done"], route)
 
     def build(self) -> CompiledStateGraph[ResearchState, None, ResearchState, ResearchState]:
         """Create and compile nodes, return edges, conditional routes, and stop edge.
@@ -97,6 +104,7 @@ class MultiAgentWorkflow:
         graph.add_node("researcher", self._run_researcher)
         graph.add_node("analyst", self._run_analyst)
         graph.add_node("writer", self._run_writer)
+        graph.add_node("critic", self._run_critic)
 
         graph.add_edge(START, "supervisor")
         graph.add_conditional_edges(
@@ -106,12 +114,14 @@ class MultiAgentWorkflow:
                 "researcher": "researcher",
                 "analyst": "analyst",
                 "writer": "writer",
+                "critic": "critic",
                 "done": END,
             },
         )
         graph.add_edge("researcher", "supervisor")
         graph.add_edge("analyst", "supervisor")
         graph.add_edge("writer", "supervisor")
+        graph.add_edge("critic", "supervisor")
         return graph.compile()
 
     def run(self, state: ResearchState) -> ResearchState:

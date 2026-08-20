@@ -10,6 +10,7 @@ def test_workflow_stops_when_state_is_complete() -> None:
         research_notes="Research notes",
         analysis_notes="Analysis notes",
         final_answer="Final answer",
+        critic_notes="Critic audit",
     )
 
     result = MultiAgentWorkflow().run(state)

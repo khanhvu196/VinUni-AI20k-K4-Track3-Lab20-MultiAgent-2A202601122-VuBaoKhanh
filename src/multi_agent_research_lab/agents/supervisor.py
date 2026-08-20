@@ -29,6 +29,8 @@ class SupervisorAgent(BaseAgent):
             route = "analyst"
         elif not state.final_answer:
             route = "writer"
+        elif not state.critic_notes:
+            route = "critic"
         else:
             route = "done"
 

@@ -20,6 +20,7 @@ def test_writer_failure_falls_back_to_analysis() -> None:
     )
     workflow = MultiAgentWorkflow()
     workflow.writer = FailingWriter()
+    workflow.supervisor.max_iterations = 1
 
     result = workflow.run(state)
 
