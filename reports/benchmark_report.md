@@ -22,3 +22,17 @@ multi-agent route: Supervisor → Researcher → Supervisor → Analyst → Supe
 Supervisor. Inputs and outputs remain inspectable for each role.
 
 ![Langfuse multi-agent trace](langfuse_multi_agent_trace.png)
+
+## Peer review
+
+**Reviewer:** Võ Hồ Nhật Nam — 2A202601700
+
+**Strength:** Các agent có vai trò rõ, shared state giữ được source ID và trace đầy đủ.
+
+**Risk / failure mode:** Nếu Researcher lấy evidence chưa phù hợp thì lỗi có thể truyền sang
+Analyst và Writer.
+
+**One concrete improvement:** Thêm Critic để kiểm tra citation và chất lượng evidence trước
+khi trả final answer.
+
+**Score:** 9/10
