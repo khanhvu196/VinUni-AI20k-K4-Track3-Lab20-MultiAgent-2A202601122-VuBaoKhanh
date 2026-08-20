@@ -1,7 +1,7 @@
-"""Supervisor / router skeleton."""
+"""Supervisor routing policy for the research workflow."""
 
 from multi_agent_research_lab.agents.base import BaseAgent
-from multi_agent_research_lab.core.errors import StudentTodoError
+from multi_agent_research_lab.core.config import get_settings
 from multi_agent_research_lab.core.state import ResearchState
 
 
@@ -10,13 +10,35 @@ class SupervisorAgent(BaseAgent):
 
     name = "supervisor"
 
+    def __init__(self, max_iterations: int | None = None) -> None:
+        self.max_iterations = (
+            get_settings().max_iterations if max_iterations is None else max_iterations
+        )
+        if self.max_iterations < 1:
+            raise ValueError("max_iterations must be at least 1")
+
     def run(self, state: ResearchState) -> ResearchState:
-        """Update `state.route_history` with the next route.
+        """Route to the worker responsible for the first missing state artifact."""
 
-        TODO(student): Implement routing policy. Suggested steps:
-        - Inspect request, current notes, and missing fields.
-        - Choose one of: researcher, analyst, writer, done.
-        - Enforce max iterations and failure fallback.
-        """
+        if state.iteration >= self.max_iterations:
+            route = "done"
+            state.errors.append("Maximum workflow iterations reached")
+        elif not state.sources or not state.research_notes:
+            route = "researcher"
+        elif not state.analysis_notes:
+            route = "analyst"
+        elif not state.final_answer:
+            route = "writer"
+        else:
+            route = "done"
 
-        raise StudentTodoError("TODO(student): implement SupervisorAgent.run")
+        state.record_route(route)
+        state.add_trace_event(
+            "supervisor_route",
+            {
+                "next": route,
+                "iteration": state.iteration,
+                "max_iterations": self.max_iterations,
+            },
+        )
+        return state
