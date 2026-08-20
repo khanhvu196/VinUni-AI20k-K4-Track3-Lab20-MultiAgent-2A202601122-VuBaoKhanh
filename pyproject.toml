@@ -22,9 +22,11 @@ dependencies = [
 [project.optional-dependencies]
 llm = [
   "openai>=1.40",
+  "google-genai>=1.0",
   "langgraph>=0.2",
   "langchain-core>=0.2",
-  "langsmith>=0.1"
+  "langsmith>=0.1",
+  "langfuse>=3.0"
 ]
 dev = [
   "pytest>=8.2",

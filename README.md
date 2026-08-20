@@ -68,7 +68,8 @@ cp .env.example .env
 Mở `.env` và điền key cần thiết.
 
 ```bash
-OPENAI_API_KEY=...
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-3.6-flash
 # optional
 LANGSMITH_API_KEY=...
 TAVILY_API_KEY=...
@@ -88,7 +89,8 @@ python -m multi_agent_research_lab.cli baseline \
   --query "Research GraphRAG state-of-the-art and write a 500-word summary"
 ```
 
-Lệnh này chỉ chạy khung baseline tối giản. Học viên cần tự triển khai logic LLM thực tế trong `src/multi_agent_research_lab/services/llm_client.py`.
+Lệnh này chạy single-agent baseline bằng một lời gọi Gemini thật. LLM client tập trung
+timeout, retry và token usage trong `src/multi_agent_research_lab/services/llm_client.py`.
 
 ### 5. Chạy multi-agent skeleton
 

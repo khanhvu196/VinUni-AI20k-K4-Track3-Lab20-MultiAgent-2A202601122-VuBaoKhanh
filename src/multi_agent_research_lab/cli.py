@@ -13,6 +13,7 @@ from multi_agent_research_lab.core.schemas import ResearchQuery
 from multi_agent_research_lab.core.state import ResearchState
 from multi_agent_research_lab.graph.workflow import MultiAgentWorkflow
 from multi_agent_research_lab.observability.logging import configure_logging
+from multi_agent_research_lab.services.llm_client import LLMClient
 
 app = typer.Typer(help="Multi-Agent Research Lab starter CLI")
 console = Console()
@@ -41,14 +42,32 @@ def _parse_query(query: str) -> ResearchQuery:
 def baseline(
     query: Annotated[str, typer.Option("--query", "-q", help="Research query")],
 ) -> None:
-    """Run a minimal single-agent baseline placeholder."""
+    """Run one Gemini call as the single-agent baseline."""
 
     _init()
     request = _parse_query(query)
     state = ResearchState(request=request)
-    state.final_answer = (
-        "Baseline skeleton response. TODO(student): replace this with a real single-agent "
-        "implementation and record latency/cost/quality metrics."
+    response = LLMClient().complete(
+        system_prompt=(
+            "You are a single-agent research assistant. Answer the user's research question "
+            "clearly and concisely. Structure the response with findings, limitations, and a "
+            "short conclusion. Do not invent citations or claim to have browsed the web."
+        ),
+        user_prompt=(
+            f"Research question: {request.query}\n"
+            f"Target audience: {request.audience}\n"
+            "Complete the research task independently in one response."
+        ),
+    )
+    state.final_answer = response.content
+    state.add_trace_event(
+        "baseline_llm_call",
+        {
+            "model": get_settings().gemini_model,
+            "input_tokens": response.input_tokens,
+            "output_tokens": response.output_tokens,
+            "cost_usd": response.cost_usd,
+        },
     )
     console.print(Panel.fit(state.final_answer, title="Single-Agent Baseline"))
 

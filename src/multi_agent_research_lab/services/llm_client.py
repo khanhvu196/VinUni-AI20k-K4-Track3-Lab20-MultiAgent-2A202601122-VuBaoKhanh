@@ -5,7 +5,12 @@ Production note: agents should depend on this interface instead of importing an 
 
 from dataclasses import dataclass
 
-from multi_agent_research_lab.core.errors import StudentTodoError
+from google import genai
+from google.genai import types
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+from multi_agent_research_lab.core.config import Settings, get_settings
+from multi_agent_research_lab.core.errors import AgentExecutionError
 
 
 @dataclass(frozen=True)
@@ -17,13 +22,46 @@ class LLMResponse:
 
 
 class LLMClient:
-    """Provider-agnostic LLM client skeleton."""
+    """Gemini client with centralized retry, timeout, and usage capture."""
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        self.settings = settings or get_settings()
 
     def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
-        """Return a model completion.
+        """Validate configuration and return a Gemini completion."""
 
-        TODO(student): Connect OpenAI, Azure OpenAI, or another provider.
-        Keep retry, timeout, and token logging here rather than inside agents.
-        """
+        if not self.settings.gemini_api_key:
+            raise AgentExecutionError("GEMINI_API_KEY is not configured")
+        if not system_prompt.strip() or not user_prompt.strip():
+            raise AgentExecutionError("System and user prompts must not be empty")
 
-        raise StudentTodoError("TODO(student): implement LLMClient.complete")
+        return self._generate(system_prompt, user_prompt)
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=4),
+        reraise=True,
+    )
+    def _generate(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+        """Call Gemini; retry transient provider errors at this boundary."""
+
+        client = genai.Client(
+            api_key=self.settings.gemini_api_key,
+            http_options=types.HttpOptions(timeout=self.settings.timeout_seconds * 1000),
+        )
+        response = client.models.generate_content(
+            model=self.settings.gemini_model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(system_instruction=system_prompt),
+        )
+        content = response.text or ""
+        if not content.strip():
+            raise AgentExecutionError("Gemini returned an empty response")
+
+        usage = response.usage_metadata
+        return LLMResponse(
+            content=content,
+            input_tokens=usage.prompt_token_count if usage else None,
+            output_tokens=usage.candidates_token_count if usage else None,
+            cost_usd=0.0,
+        )
