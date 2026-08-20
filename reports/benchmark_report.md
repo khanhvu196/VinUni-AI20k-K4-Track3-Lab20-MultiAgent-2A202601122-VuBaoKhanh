@@ -17,4 +17,8 @@ A weak or unsupported Researcher note can cascade through Analyst and Writer. Th
 
 ## Trace evidence
 
-Open the configured Langfuse project and capture the multi-agent trace showing Supervisor, Researcher, Analyst, and Writer spans.
+The Langfuse trace captured on 2026-08-20 shows the single-agent baseline and the complete
+multi-agent route: Supervisor → Researcher → Supervisor → Analyst → Supervisor → Writer →
+Supervisor. Inputs and outputs remain inspectable for each role.
+
+![Langfuse multi-agent trace](langfuse_multi_agent_trace.png)
