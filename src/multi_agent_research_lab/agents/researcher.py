@@ -27,6 +27,7 @@ class ResearcherAgent(BaseAgent):
             state.request.query,
             max_results=state.request.max_sources,
         )
+        state.sources = sources
         evidence_blocks = []
         for source in sources:
             source_id = source.metadata.get("source_id", "unknown")
@@ -53,7 +54,6 @@ class ResearcherAgent(BaseAgent):
             ),
         )
 
-        state.sources = sources
         state.research_notes = response.content
         state.agent_results.append(
             AgentResult(

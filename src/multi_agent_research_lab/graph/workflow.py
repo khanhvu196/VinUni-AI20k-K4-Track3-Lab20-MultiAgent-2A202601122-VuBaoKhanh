@@ -34,12 +34,29 @@ class MultiAgentWorkflow:
     def _run_agent(agent: BaseAgent, state: ResearchState) -> dict[str, Any]:
         """Run an agent and convert its Pydantic state to a LangGraph update."""
 
+        previous_result_count = len(state.agent_results)
         with trace_span(
             agent.name,
             {"iteration": state.iteration, "query": state.request.query},
         ) as span:
-            result = agent.run(state)
-            if result.agent_results:
+            try:
+                result = agent.run(state)
+            except Exception as exc:
+                state.errors.append(f"{agent.name} failed after retries: {exc}")
+                span["attributes"].update({"fallback": True, "error": str(exc)})
+                if agent.name == "researcher" and state.sources:
+                    state.research_notes = "\n".join(
+                        f"- [{source.metadata.get('source_id', 'unknown')}] {source.snippet}"
+                        for source in state.sources
+                    )
+                elif agent.name == "analyst" and state.research_notes:
+                    state.analysis_notes = "Provisional analysis fallback:\n" + state.research_notes
+                elif agent.name == "writer" and (state.analysis_notes or state.research_notes):
+                    state.final_answer = state.analysis_notes or state.research_notes
+                else:
+                    raise
+                result = state
+            if len(result.agent_results) > previous_result_count:
                 span["attributes"].update(result.agent_results[-1].metadata)
         result.add_trace_event("agent_span", span)
         return result.model_dump()
